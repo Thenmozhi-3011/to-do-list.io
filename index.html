@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>To-Do App</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <h2>To-Do</h2>
+      <ul id="filterMenu">
+        <li class="active" data-category="Today">Today</li>
+        <li data-category="Tomorrow">Tomorrow</li>
+        <li data-category="This Week">This Week</li>
+        <li data-category="Overdue">Overdue</li>
+        <li data-category="High Priority">High Priority</li>
+        <li data-category="Medium Priority">Medium Priority</li>
+        <li data-category="Low Priority">Low Priority</li>
+        <li data-category="Completed">Completed</li>
+        <li data-category="All">All Tasks</li>
+      </ul>
+    </aside>
+
+    <main class="main">
+      <h1 id="currentCategory">Today</h1>
+      <div class="input-wrapper">
+        <input type="text" id="taskInput" placeholder="Add a task..." />
+        <select id="prioritySelect">
+          <option value="None">No Priority</option>
+          <option value="High Priority">High Priority</option>
+          <option value="Medium Priority">Medium Priority</option>
+          <option value="Low Priority">Low Priority</option>
+        </select>
+        <input type="date" id="dueDateInput" />
+        <button onclick="addTask()">+</button>
+      </div>
+      <ul id="taskList" class="task-list"></ul>
+    </main>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
