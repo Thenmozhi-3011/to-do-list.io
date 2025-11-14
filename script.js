@@ -1,17 +1,84 @@
 let tasks = [];
 let currentFilter = "Today";
 
+// 🔒 Load tasks from localStorage on page load
+function loadTasksFromLocalStorage() {
+    const storedTasks = localStorage.getItem('tasks');
+    if (storedTasks) {
+        tasks = JSON.parse(storedTasks);
+    }
+}
+
+// 🔒 Save tasks to localStorage
+function saveTasksToLocalStorage() {
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+}
+
+// 🔊 Create an Audio object for beep sound
+const beepSound = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
+beepSound.volume = 1.0; // Full volume
+
+// 🟢 Allow sound on first click (needed for Edge/Chrome autoplay policies)
+document.body.addEventListener("click", () => {
+  beepSound.play().catch(() => {});
+  beepSound.pause();
+  beepSound.currentTime = 0;
+}, { once: true });
+
+// ✅ Request Notification permission on load
+if ("Notification" in window && Notification.permission !== "granted") {
+  Notification.requestPermission();
+}
+
+// Function to show notifications or fallback alert
+function showNotification(message) {
+  if ("Notification" in window && Notification.permission === "granted") {
+    new Notification(message, {
+      icon: "https://cdn-icons-png.flaticon.com/512/1827/1827349.png",
+      body: "Please check your task list!",
+    });
+  } else {
+    alert(message); // fallback if permission not granted
+  }
+}
+
+// 🔔 Check overdue tasks every 1 second (fast detection)
+function checkOverdueTasks() {
+  const today = new Date().toISOString().split("T")[0];
+  tasks.forEach(task => {
+    if (task.dueDate < today && !task.completed && !task.notified) {
+      // Play loud beep 3 times for attention
+      let repeat = 0;
+      const beepInterval = setInterval(() => {
+        beepSound.currentTime = 0;
+        beepSound.play();
+        repeat++;
+        if (repeat >= 3) clearInterval(beepInterval);
+      }, 400);
+
+      // Show instant notification
+      showNotification(`⚠️ Overdue Task: ${task.text} (Due: ${task.dueDate})`);
+
+      task.notified = true; // Prevent repeat alerts for same task
+    }
+  });
+}
+setInterval(checkOverdueTasks, 1000); // check every second 🔁
+
+// 🧩 Add New Task
 function addTask() {
   const text = document.getElementById("taskInput").value.trim();
   const priority = document.getElementById("prioritySelect").value;
   const due = document.getElementById("dueDateInput").value || new Date().toISOString().split("T")[0];
   if (!text || !due) return;
-  tasks.push({ text, priorityCategory: priority, dueDate: due, completed: false });
+  tasks.push({ text, priorityCategory: priority, dueDate: due, completed: false, notified: false });
+  saveTasksToLocalStorage(); // ✅ Save after adding
   document.getElementById("taskInput").value = "";
   document.getElementById("dueDateInput").value = "";
   renderTasks(currentFilter);
 }
 
+// 🧮 Render Tasks
 function renderTasks(filter) {
   const taskList = document.getElementById("taskList");
   taskList.innerHTML = "";
@@ -33,9 +100,7 @@ function renderTasks(filter) {
   } else if (filter === "This Week") {
     activeTasks = tasks.filter(t => !t.completed && t.dueDate >= today && t.dueDate <= weekEndStr);
     completedTasks = tasks.filter(t => t.completed && t.dueDate >= today && t.dueDate <= weekEndStr);
-  } else if (
-    ["High Priority", "Medium Priority", "Low Priority"].includes(filter)
-  ) {
+  } else if (["High Priority", "Medium Priority", "Low Priority"].includes(filter)) {
     activeTasks = tasks.filter(t => t.priorityCategory === filter && !t.completed);
     completedTasks = tasks.filter(t => t.priorityCategory === filter && t.completed);
   } else if (filter === "Today") {
@@ -56,11 +121,8 @@ function renderTasks(filter) {
     "None": 4
   };
 
-  activeTasks.sort((a, b) =>
-    (priorityOrder[a.priorityCategory] || 4) - (priorityOrder[b.priorityCategory] || 4)
-  );
+  activeTasks.sort((a, b) => (priorityOrder[a.priorityCategory] || 4) - (priorityOrder[b.priorityCategory] || 4));
 
-  // Show Active Tasks
   activeTasks.forEach(task => {
     const index = tasks.indexOf(task);
     const li = document.createElement("li");
@@ -75,7 +137,6 @@ function renderTasks(filter) {
     taskList.appendChild(li);
   });
 
-  // Show Completed Tasks under section
   if (completedTasks.length > 0) {
     const heading = document.createElement("h3");
     heading.textContent = "Completed Tasks";
@@ -100,16 +161,20 @@ function renderTasks(filter) {
   }
 }
 
+// 🔁 Task toggle + delete
 function toggleComplete(index) {
   tasks[index].completed = !tasks[index].completed;
+  saveTasksToLocalStorage(); // ✅ Save after toggling
   renderTasks(currentFilter);
 }
 
 function deleteTask(index) {
   tasks.splice(index, 1);
+  saveTasksToLocalStorage(); // ✅ Save after deletion
   renderTasks(currentFilter);
 }
 
+// 🧭 Filter switching
 document.querySelectorAll("#filterMenu li").forEach(li => {
   li.addEventListener("click", () => {
     document.querySelector("#filterMenu li.active")?.classList.remove("active");
@@ -120,4 +185,6 @@ document.querySelectorAll("#filterMenu li").forEach(li => {
   });
 });
 
+// 🔓 Load tasks from localStorage first, then render
+loadTasksFromLocalStorage();
 renderTasks(currentFilter);

@@ -3,13 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>To-Do App</title>
+  <title>FocusFlow - To-Do List</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="app">
+    <!-- Sidebar -->
     <aside class="sidebar">
-      <h2>To-Do</h2>
+      <h2>FocusFlow</h2>
+      <button id="logoutBtn" class="logout">Logout</button>
       <ul id="filterMenu">
         <li class="active" data-category="Today">Today</li>
         <li data-category="Tomorrow">Tomorrow</li>
@@ -23,8 +25,11 @@
       </ul>
     </aside>
 
+    <!-- Main Content -->
     <main class="main">
       <h1 id="currentCategory">Today</h1>
+
+      <!-- Task Input -->
       <div class="input-wrapper">
         <input type="text" id="taskInput" placeholder="Add a task..." />
         <select id="prioritySelect">
@@ -36,9 +41,56 @@
         <input type="date" id="dueDateInput" />
         <button onclick="addTask()">+</button>
       </div>
+
+      <!-- Task List -->
       <ul id="taskList" class="task-list"></ul>
     </main>
   </div>
+
+  <!-- Your To-Do logic -->
   <script src="script.js"></script>
+
+  <!-- Firebase Login Integration -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { 
+      getAuth, 
+      onAuthStateChanged,
+      signOut 
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+
+    // ✅ Replace with your Firebase project configuration
+    const firebaseConfig = {
+  apiKey: "AIzaSyA5tMd9tXKnRuIe9tXm_cqrVNNimd-J6SA",
+  authDomain: "to-do-list-3011.firebaseapp.com",
+  projectId: "to-do-list-3011",
+  storageBucket: "to-do-list-3011.firebasestorage.app",
+  messagingSenderId: "118532137814",
+  appId: "1:118532137814:web:953ac3ba0608d729a06cf7",
+  measurementId: "G-GFLG14Y41F"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // 🧭 Check if user is logged in
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        window.location.href = "login.html"; // Redirect if not logged in
+      }
+    });
+
+    // 🚪 Logout functionality
+    const logoutBtn = document.getElementById("logoutBtn");
+    logoutBtn.addEventListener("click", () => {
+      signOut(auth).then(() => {
+        alert("Logged out successfully!");
+        window.location.href = "login.html";
+      }).catch((error) => {
+        console.error("Logout error:", error);
+      });
+    });
+  </script>
 </body>
 </html>
